@@ -154,7 +154,7 @@ def extract_log_events(
     )
 
     event_pattern = re.compile(
-        r"^(?:.*?\s)?(?:ERROR|WARN)\s+.*$",
+        r"^[^\r\n]*?(?:ERROR|WARN)[ \t]+[^\r\n]*$",
         re.MULTILINE,
     )
 
