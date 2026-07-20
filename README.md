@@ -1,5 +1,15 @@
 # JavaLog Agent
 
+> Mini-Projeto — Módulo 2: Agentes de IA e Automação
+
+| Identificação | Informação |
+|---|---|
+| **Projeto** | JavaLog Agent |
+| **Autor** | Edenilson Alves Gonçalves |
+| **Curso** | SCTEC — IA para DEVs |
+| **Turma** | Turma 1 |
+| **Módulo** | Módulo 2 — Agentes de IA e Automação |
+
 Agente de diagnóstico para logs Java e Spring Boot, implementado com Python, LangGraph, LangChain e saída estruturada com Pydantic.
 
 O fluxo valida o arquivo, lê o log por uma ferramenta restrita, extrai eventos e exceções, classifica o problema, produz um diagnóstico e grava um relatório Markdown.
@@ -22,40 +32,33 @@ O fluxo valida o arquivo, lê o log por uma ferramenta restrita, extrai eventos 
 
 Fluxo principal:
 
-    START
-      |
-      v
-    validar_entrada
-      |
-      +-- inválida --> gerar_resposta_erro --> END
-      |
-      v
-    ler_log
-      |
-      +-- erro --> gerar_resposta_erro --> END
-      |
-      v
-    extrair_eventos
-      |
-      v
-    classificar_log
-      |
-      +-- Clean --> gerar_resultado_sem_erros
-      |
-      +-- erro --> diagnosticar
-                      |
-                      v
-                  validar_saida
-                      |
-                      +-- inválida --> tratar_saida_invalida
-                      |
-                      v
-               escrever_relatorio
-                      |
-                     END
+```mermaid
+flowchart TD
+    START([START]) --> validar_entrada
 
-O LLM é injetado no grafo por `create_graph(llm=...)`. Sem uma instância injetada, o nó cria `ChatOpenAI` em tempo de execução.
+    validar_entrada -->|entrada inválida| gerar_resposta_erro
+    validar_entrada -->|entrada válida| ler_log
 
+    gerar_resposta_erro --> END([END])
+
+    ler_log -->|falha de leitura| gerar_resposta_erro
+    ler_log -->|leitura concluída| extrair_eventos
+
+    extrair_eventos --> classificar_log
+
+    classificar_log -->|log limpo| gerar_resultado_sem_erros
+    classificar_log -->|erros encontrados| diagnosticar
+
+    gerar_resultado_sem_erros --> escrever_relatorio
+
+    diagnosticar --> validar_saida
+
+    validar_saida -->|saída válida| escrever_relatorio
+    validar_saida -->|saída inválida| tratar_saida_invalida
+
+    tratar_saida_invalida --> escrever_relatorio
+    escrever_relatorio --> END
+```
 ## Estrutura
 
     java-log-agent/
