@@ -197,3 +197,23 @@ Cobertura funcional da suíte:
 | `success_fallback` | Diagnóstico determinístico após falha ou ausência do LLM |
 | `success_no_errors` | Log sem erros relevantes |
 | `error` | Entrada inválida ou falha de leitura |
+
+## O problema
+
+Desenvolvedores e equipes de suporte perdem muito tempo analisando logs longos e complexos de aplicações Java/Spring Boot para identificar a causa raiz de exceções e erros. O JavaLog Agent automatiza essa análise, entregando um diagnóstico estruturado com evidências extraídas do próprio log.
+
+## Principais decisões tomadas
+
+- **LLM injetado como dependência** (`create_graph(llm=...)`): o nó de diagnóstico não detecta objetos de teste por atributo; produção e testes exercitam o mesmo caminho de código.
+- **Chamada única ao LLM**, apenas com evidências extraídas por regex (máximo 5 exceções + 5 eventos), controlando custo e contexto.
+- **Classificação determinística antes do LLM**: logs limpos geram relatório determinístico e nunca acionam o modelo.
+- **Fallback determinístico** para ausência de chave, falha do modelo ou saída estruturalmente inválida — o agente sempre conclui de forma controlada, sem depender de rede.
+- **Defesa em profundidade**: validação de entrada e ferramentas revalidam caminho, extensão e tamanho de forma independente; escrita confinada a `output/` com sanitização de nome.
+
+## Limitações da solução
+
+- A categoria é atribuída por **heurística de substrings** (Database, Network, Configuration, Code, Unknown); logs fora desses padrões caem em `Unknown`.
+- Logs contendo **apenas WARN** (sem exceções nem ERROR) são classificados como `Clean` e não geram diagnóstico.
+- O modo de diagnóstico com IA exige `OPENAI_API_KEY`; sem a chave, o agente opera exclusivamente em fallback determinístico.
+- A leitura é restrita a `examples/logs/` por decisão de segurança; analisar logs de outros diretórios exige copiá-los para lá.
+- O relatório é gerado apenas em Markdown, em `output/`.
